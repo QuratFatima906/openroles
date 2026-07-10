@@ -1,4 +1,4 @@
-# Job funnel
+# Open Roles
 
 A small system that pulls remote engineering roles from free public job feeds, filters them to your criteria (long-term contractor / full-time remote, worldwide-friendly, senior full-stack or applied-AI), removes roles you've already seen, and emails you a daily digest. Runs itself once a day via GitHub Actions, no server needed.
 
