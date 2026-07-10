@@ -1,0 +1,38 @@
+name: Daily job funnel
+
+on:
+  schedule:
+    # 06:00 UTC = 11:00 AM Pakistan time. Adjust the cron if you want.
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}   # lets you trigger a run manually from the Actions tab
+
+permissions:
+  contents: write          # needed to commit the updated seen_jobs.json + digest
+
+jobs:
+  run-funnel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run funnel
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TO_EMAIL: ${{ secrets.TO_EMAIL }}
+        run: python job_funnel.py
+
+      - name: Commit digest + state
+        run: |
+          git config user.name "job-funnel-bot"
+          git config user.email "actions@github.com"
+          git add digests/ seen_jobs.json
+          git commit -m "Daily digest $(date -u +%F)" || echo "Nothing to commit"
+          git push || echo "Nothing to push"
