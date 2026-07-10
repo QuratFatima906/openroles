@@ -1,4 +1,4 @@
-name: Daily job funnel
+name: Daily Open Roles
 
 on:
   schedule:

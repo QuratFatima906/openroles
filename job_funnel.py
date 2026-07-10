@@ -343,7 +343,44 @@ def render_markdown(scored):
     return "\n".join(lines)
 
 
-def send_email(markdown_body):
+def render_html(scored):
+    """HTML version of the digest for the email body. Inline styles only --
+    email clients strip <style> blocks."""
+    today = dt.date.today().isoformat()
+    esc = html.escape
+    parts = [
+        '<div style="font-family:Arial,Helvetica,sans-serif;max-width:640px;'
+        'margin:0 auto;padding:16px;color:#1f2937;">',
+        f'<h2 style="margin:0 0 4px;">Open Roles &mdash; {today}</h2>',
+    ]
+    if not scored:
+        parts.append('<p>No new matching roles today. The funnel ran fine; '
+                     'nothing cleared the filter.</p>')
+    else:
+        parts.append(f'<p style="margin:0 0 20px;color:#6b7280;">'
+                     f'{len(scored)} new matching role(s), best fit first.</p>')
+        for job, sc, reasons in scored:
+            salary = f' &nbsp;&bull;&nbsp; {esc(job["salary"])}' if job["salary"] else ""
+            parts.append(
+                '<div style="border:1px solid #e5e7eb;border-radius:8px;'
+                'padding:14px 16px;margin:0 0 12px;">'
+                f'<div style="font-size:16px;font-weight:bold;margin-bottom:4px;">'
+                f'<a href="{esc(job["url"])}" style="color:#1d4ed8;text-decoration:none;">'
+                f'{esc(job["title"])}</a></div>'
+                f'<div style="margin-bottom:6px;">{esc(job["company"])}</div>'
+                f'<div style="font-size:13px;color:#6b7280;margin-bottom:6px;">'
+                f'{esc(job["source"])} &nbsp;&bull;&nbsp; {esc(job["location"])}{salary}</div>'
+                f'<div style="font-size:13px;color:#374151;">'
+                f'Fit score {sc} &mdash; {esc("; ".join(reasons))}</div>'
+                '</div>'
+            )
+    parts.append('<p style="font-size:12px;color:#9ca3af;">Data via '
+                 '<a href="https://remoteok.com" style="color:#9ca3af;">RemoteOK</a>, '
+                 'We Work Remotely, Remotive, Arbeitnow.</p></div>')
+    return "".join(parts)
+
+
+def send_email(markdown_body, html_body=None):
     """Emails the digest if GMAIL_USER / GMAIL_APP_PASSWORD / TO_EMAIL are set.
     Use a Gmail App Password (not your normal password)."""
     user = os.environ.get("GMAIL_USER")
@@ -354,8 +391,12 @@ def send_email(markdown_body):
         return
     import smtplib
     from email.mime.text import MIMEText
-    msg = MIMEText(markdown_body, "plain", "utf-8")
-    msg["Subject"] = f"Job digest - {dt.date.today().isoformat()}"
+    from email.mime.multipart import MIMEMultipart
+    msg = MIMEMultipart("alternative")
+    msg.attach(MIMEText(markdown_body, "plain", "utf-8"))
+    if html_body:
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
+    msg["Subject"] = f"Open Roles - {dt.date.today().isoformat()}"
     msg["From"] = user
     msg["To"] = to
     try:
@@ -407,7 +448,7 @@ def main():
     out_path.write_text(md)
     print(md)
 
-    send_email(md)
+    send_email(md, render_html(unique))
 
     # only remember jobs we actually surfaced, so a role that later improves can still resurface
     save_seen(seen | new_keys)
