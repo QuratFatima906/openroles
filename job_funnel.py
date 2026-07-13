@@ -45,7 +45,6 @@ CONFIG = {
     "role_keywords": [
         "full stack", "fullstack", "full-stack",
         "software engineer", "software developer",
-        "backend", "back end", "back-end",
         "frontend", "front end", "front-end",
         "ai engineer", "ml engineer", "machine learning engineer",
         "applied ai", "applied ml", "platform engineer",
@@ -79,11 +78,13 @@ CONFIG = {
     ],
 
     # REJECT if title/description looks like AI-training gig work or non-tech noise.
+    # Matched on word boundaries, so "java" does NOT reject "javascript" roles.
     "exclude_title": [
         "data annotation", "annotator", "ai training", "ai trainer",
         "search evaluator", "rater", "transcription",
         "barista", "caretaker", "firefighter", "houseperson", "mason",
         "sales trainee", "territory sales", "dispatch", "accounts assistant",
+        "java", "backend", "back end", "back-end",
     ],
 
     # Only surface jobs posted within this many days (keeps the daily digest fresh).
@@ -92,7 +93,6 @@ CONFIG = {
     # We Work Remotely category RSS feeds to pull.
     "wwr_feeds": [
         "https://weworkremotely.com/categories/remote-full-stack-programming-jobs.rss",
-        "https://weworkremotely.com/categories/remote-back-end-programming-jobs.rss",
         "https://weworkremotely.com/categories/remote-front-end-programming-jobs.rss",
         "https://weworkremotely.com/categories/remote-devops-sysadmin-jobs.rss",
     ],
@@ -270,9 +270,10 @@ def score_job(job):
     blob = (job["title"] + " " + job["description"] + " " +
             job["location"] + " " + " ".join(map(str, job["tags"]))).lower()
 
-    # Hard reject: gig/non-tech titles
+    # Hard reject: gig/non-tech titles. Word-boundary match so "java" doesn't
+    # hit "javascript".
     for bad in CONFIG["exclude_title"]:
-        if bad in title:
+        if re.search(rf"\b{re.escape(bad)}\b", title):
             return False, 0, [f"excluded title: {bad}"]
 
     # Must match a role keyword in the title
