@@ -32,7 +32,7 @@ The digest prints to your terminal and is saved in `digests/`.
    - `GMAIL_USER` = your gmail address
    - `GMAIL_APP_PASSWORD` = the 16-char app password
    - `TO_EMAIL` = where to send the digest (can be the same address)
-3. That's it. The workflow in `.github/workflows/daily-jobs.yml` runs at 06:00 UTC (11 AM PKT) daily. You can also trigger it manually from the repo's **Actions** tab.
+3. That's it. The workflow in `.github/workflows/daily-jobs.yml` runs at 05:00 UTC (10 AM PKT) daily. You can also trigger it manually from the repo's **Actions** tab.
 
 Without the email secrets it still runs and just commits the daily digest file to the repo, which you can read there.
 

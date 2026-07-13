@@ -2,8 +2,8 @@ name: Daily Open Roles
 
 on:
   schedule:
-    # 17:00 UTC = 10:00 PM Pakistan time. Adjust the cron if you want.
-    - cron: "0 17 * * *"
+    # 05:00 UTC = 10:00 AM Pakistan time. Adjust the cron if you want.
+    - cron: "0 5 * * *"
   workflow_dispatch: {}   # lets you trigger a run manually from the Actions tab
 
 permissions:
