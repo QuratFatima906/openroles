@@ -234,6 +234,10 @@ def fetch_arbeitnow():
         )
         r.raise_for_status()
         for item in r.json().get("data", []):
+            # Arbeitnow is a German board; most posts are on-site. Only keep
+            # jobs it explicitly flags as remote.
+            if not item.get("remote"):
+                continue
             jobs.append({
                 "source": "Arbeitnow",
                 "title": item.get("title", ""),
@@ -284,6 +288,13 @@ def score_job(job):
     for bad in CONFIG["exclude_location"]:
         if bad in blob:
             return False, 0, [f"excluded location: {bad}"]
+
+    # Worldwide gate: the location FIELD itself must be unrestricted. Boards
+    # put the real restriction there ("Munich", "Europe only") even when the
+    # description says "fully remote", so the description doesn't count here.
+    loc = job["location"].lower().strip()
+    if loc not in ("", "remote") and not any(k in loc for k in CONFIG["worldwide_keywords"]):
+        return False, 0, [f"location not worldwide: {job['location']}"]
 
     # Freshness
     if not _recent_enough(job.get("epoch"), CONFIG["max_age_days"]):
